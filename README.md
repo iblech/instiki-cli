@@ -9,7 +9,7 @@ local editor. Use it like this:
     * Fetching https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox... done.
     * Waiting for changes, go edit file "Sandbox"...
 
-...time passes...
+…time passes…
 
     --- /dev/stdin  2016-03-26 17:41:12.383587226 +0100
     +++ Sandbox     2016-03-26 17:41:12.195587230 +0100
@@ -22,11 +22,14 @@ local editor. Use it like this:
     * Accept (y/n)? y
     * Saving changes... done.
 
-...the cycle continues...
+…the cycle continues…
 
     * Fetching https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox... done.
-    * Waiting for changes, go edit "Sandbox"...
+    * Waiting for changes, go edit file "Sandbox"...
 
 I wrote the tool specifically to be able to edit the
 [nLab](https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox) more comfortably,
 but *instiki-cli* should work with any Instiki installation.
+
+Before pushing changes, *instiki-cli* checks whether the entry on the wiki
+has changed meanwhile and aborts if that should be the case.
