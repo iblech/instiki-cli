@@ -1,5 +1,5 @@
 #!/usr/bin/perl
-# Usage: instiki-cli https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox
+# Usage: instiki-cli https://wiki.example.org/instiki/show/Sandbox
 
 use warnings;
 use strict;
@@ -18,24 +18,33 @@ $|++;
 my $ua = LWP::UserAgent->new();
 $ua->cookie_jar(HTTP::Cookies->new());
 
+# Return the URL for the appropriate kind of action ("show", "edit", ...)
 sub url {
-    my ($base, $type) = @_;
-    $base =~ s#/show/#/$type/# or die;
+    my ($base, $action) = @_;
+    $base =~ s#/show/#/$action/# or die;
     return $base;
 }
 
+# Extract the entry contents and, if given an "edit" page, its name and
+# the edit key
 sub extract {
     my $page = shift;
 
     $page =~ /<textarea[^>]*>(.*)<\/textarea>/s or die $page;
     my $contents = decode_entities($1);
     $contents .= "\015\012";
+    # We append a final EOL so editors are not confused. When pushing to the
+    # wiki, it will be removed again.
 
     my $name;
     if($page =~ /<input id="new_name".*?value="([^"]*)"/) {
         $name = decode_entities($1);
     }
 
+    # Hivelogic Enkoder wraps the edit key in multiple layers of "eval".
+    # Instead of reverse engineering the algorithm, we simply hand the code to
+    # a JavaScript interpreter.
+    # http://hivelogic.com/enkoder/
     my $key;
     if($page =~ /(function hivelogic_enkoder.*?hivelogic_enkoder\(\);)/s) {
         my $js = <<EOF;
@@ -68,11 +77,14 @@ EOF
     return { contents => $contents, name => $name, key => $key };
 }
 
+# Fetch a wiki entry
 sub fetch { extract($ua->request(GET url(shift, "source"))->as_string()) }
 
+# Update a wiki entry
 sub store {
     my ($url, $old_contents, $new_contents) = @_;
 
+    # Check for changes and fetch the edit key
     my $old = extract($ua->request(GET url($url, "edit"))->as_string());
     if($old->{contents} ne $old_contents) {
         print "Contents have changed meanwhile. Aborting... ";
@@ -81,6 +93,7 @@ sub store {
         exit 1;
     }
 
+    # Remove the final EOL (which we synthetically added in `extract`)
     $new_contents =~ s/\015\012$//;
 
     my $req = POST url($url, "save"), [
@@ -92,6 +105,7 @@ sub store {
     $ua->request($req)->as_string() =~ /redirected/ or die;
 }
 
+# Watch a file for changes
 sub watch {
     my $file = shift;
 
@@ -113,7 +127,11 @@ sub watch {
     }
 }
 
-my $url  = $ARGV[0];
+
+# Check for existence of a JavaScript interpreter
+system("js", "-e", "1") == 0 or die "Couldn't fork \"js\" to evaluate JavaScript.\n";
+
+my $url  = $ARGV[0] or die "Usage: $0 http://wiki.example.org/instiki/show/Sandbox\n";
 my $file = (split /\//, $url)[-1];
 
 my $expected_contents;

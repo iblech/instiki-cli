@@ -32,4 +32,20 @@ I wrote the tool specifically to be able to edit the
 but *instiki-cli* should work with any Instiki installation.
 
 Before pushing changes, *instiki-cli* checks whether the entry on the wiki
-has changed meanwhile and aborts if that should be the case.
+has changed meanwhile and aborts if that's the case.
+
+
+## Dependencies
+
+* Perl 5 and some Perl modules. On Debian-based distributions, these can be
+  installed using `apt-get install libfile-slurp-perl libhtml-parser-perl
+  libhttp-cookies-perl libhttp-message-perl libwww-perl`.
+* Node or some other interpreter for JavaScript. Use `apt-get install nodejs`
+  on Debian-based distributions and ensure that `/usr/bin/js` points to
+  `/usr/bin/node`.
+* The standard unix tool `diff`.
+
+
+## Shortcomings
+
+*instiki-cli* was written for my personal use. It is not polished in any way.
