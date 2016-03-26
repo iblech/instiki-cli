@@ -1,0 +1,152 @@
+#!/usr/bin/perl
+# Usage: instiki-cli https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox
+
+use warnings;
+use strict;
+
+use HTML::Entities;
+use HTTP::Request::Common qw< GET POST >;
+use LWP::UserAgent;
+use HTTP::Cookies;
+use Time::HiRes qw< sleep time stat >;
+use File::Slurp;
+
+use constant FILE_WATCH_DELAY => 0.1;
+use constant AUTHOR           => $ENV{INSTIKI_AUTHOR} || "AnonymousCoward";
+$|++;
+
+my $ua = LWP::UserAgent->new();
+$ua->cookie_jar(HTTP::Cookies->new());
+
+sub url {
+    my ($base, $type) = @_;
+    $base =~ s#/show/#/$type/# or die;
+    return $base;
+}
+
+sub extract {
+    my $page = shift;
+
+    $page =~ /<textarea[^>]*>(.*)<\/textarea>/s or die $page;
+    my $contents = decode_entities($1);
+    $contents .= "\015\012";
+
+    my $name;
+    if($page =~ /<input id="new_name".*?value="([^"]*)"/) {
+        $name = decode_entities($1);
+    }
+
+    my $key;
+    if($page =~ /(function hivelogic_enkoder.*?hivelogic_enkoder\(\);)/s) {
+        my $js = <<EOF;
+            document = {
+                documentElement: {
+                    lastChild: undefined,
+                    parentNode: {
+                        appendChild: function (o) {}
+                    }
+                },
+                createElement: function (tag) {
+                    return {
+                        setAttribute: function (k,v) {
+                            if(k == "value") {
+                                console.log(v);
+                            }
+                        },
+                    };
+                }
+            };
+
+            $1
+EOF
+
+        open my $fh, "-|", "js", "-e", "$js" or die $!;
+        local $/;
+        chomp($key = <$fh>);
+    }
+
+    return { contents => $contents, name => $name, key => $key };
+}
+
+sub fetch { extract($ua->request(GET url(shift, "source"))->as_string()) }
+
+sub store {
+    my ($url, $old_contents, $new_contents) = @_;
+
+    my $old = extract($ua->request(GET url($url, "edit"))->as_string());
+    if($old->{contents} ne $old_contents) {
+        print "Contents have changed meanwhile. Aborting... ";
+        my $b = $ua->request(GET url($url, "cancel_edit"))->as_string();
+        print "done.\n";
+        exit 1;
+    }
+
+    $new_contents =~ s/\015\012$//;
+
+    my $req = POST url($url, "save"), [
+        _form_key => $old->{key},
+        content   => $new_contents,
+        new_name  => $old->{name},
+        author    => AUTHOR,
+    ];
+    $ua->request($req)->as_string() =~ /redirected/ or die;
+}
+
+sub watch {
+    my $file = shift;
+
+    my $start = time();
+    while(1) {
+        sleep FILE_WATCH_DELAY;
+        my $ftime = (stat $file)[9];
+        next unless $ftime;  # if file vanished
+        last if $ftime > $start;
+    }
+
+    # Wait for the files to settle.
+    while(1) {
+        sleep FILE_WATCH_DELAY;
+        my $ftime = (stat $file)[9];
+        next unless $ftime;
+        next if time() - $ftime < FILE_WATCH_DELAY;
+        last;
+    }
+}
+
+my $url  = $ARGV[0];
+my $file = (split /\//, $url)[-1];
+
+my $expected_contents;
+
+while(1) {
+    print "* Fetching $url... ";
+    my $old = fetch($url);
+
+    if(defined $expected_contents and $old->{contents} ne $expected_contents) {
+        print "* There was some problem saving the changes.\n";
+        exit 1;
+    }
+
+    open my $fh, ">", $file or die $!;
+    print $fh $old->{contents} or die $!;
+    close $fh or die $!;
+    print "done.\n";
+
+    while(1) {
+        print "* Waiting for changes, go edit file \"$file\"...\n";
+        watch($file);
+
+        open my $fh, "|-", "diff", "-u", "--", "/dev/stdin", "$file" or die $!;
+        print $fh $old->{contents} or die $!;
+        close $fh;
+
+        print "* Accept (y/n)? ";
+        my $ok = <STDIN>;
+        last if $ok =~ /y/;
+    }
+
+    print "* Pushing changes... ";
+    $expected_contents = read_file($file);
+    store($url, $old->{contents}, $expected_contents);
+    print "done.\n\n";
+}
