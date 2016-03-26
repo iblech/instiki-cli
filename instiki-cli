@@ -140,14 +140,18 @@ while(1) {
     print "* Fetching $url... ";
     my $old = fetch($url);
 
-    if(defined $expected_contents and $old->{contents} ne $expected_contents) {
-        print "* There was some problem saving the changes.\n";
-        exit 1;
+    if(defined $expected_contents) {
+        if($old->{contents} ne $expected_contents) {
+            print "* There was some problem saving the changes.\n";
+            exit 1;
+        }
+        # No need to update the file in this branch
+    } else {
+        open my $fh, ">", $file or die $!;
+        print $fh $old->{contents} or die $!;
+        close $fh or die $!;
     }
 
-    open my $fh, ">", $file or die $!;
-    print $fh $old->{contents} or die $!;
-    close $fh or die $!;
     print "done.\n\n";
 
     while(1) {
