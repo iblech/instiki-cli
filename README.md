@@ -29,7 +29,9 @@ local editor. Use it like this:
 
 I wrote the tool specifically to be able to edit the
 [nLab](https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox) more comfortably,
-but *instiki-cli* should work with any Instiki installation.
+but *instiki-cli* should work with any Instiki installation. It's for editing
+single entries only, it cannot be used to mirror a wiki (or even keep it
+synchronized).
 
 Before pushing changes, *instiki-cli* checks whether the entry on the wiki
 has changed meanwhile and aborts if that's the case.
