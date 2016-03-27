@@ -6,6 +6,7 @@ local editor. Use it like this:
 
     $ export INSTIKI_AUTHOR="Emmy Noether"
     $ instiki-cli https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox
+    * Changes will be signed as "Emmy Noether".
     * Fetching https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox... done.
     * Waiting for changes, go edit file "Sandbox"...
 
