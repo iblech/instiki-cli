@@ -31,11 +31,18 @@ local editor. Use it like this:
 I wrote the tool specifically to be able to edit the
 [nLab](https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox) more comfortably,
 but *instiki-cli* should work with any Instiki installation. It's for editing
-single entries only, it cannot be used to mirror a wiki (or even keep it
+single entries only and cannot be used to mirror a wiki (or even keep it
 synchronized).
 
-Before pushing changes, *instiki-cli* checks whether the entry on the wiki
-has changed meanwhile and aborts if that's the case.
+
+## Features
+
+* Pushing to the wiki is triggered by saving the file.
+* *instiki-cli* shows a diff of the local changes and asks for confirmation
+  before pushing. That way unintended changes like accidental truncations of
+  the file don't find their way to the wiki.
+* Before pushing changes, *instiki-cli* checks whether the entry on the wiki
+  has changed in the meantime and aborts if that's the case.
 
 
 ## Dependencies
@@ -46,7 +53,12 @@ has changed meanwhile and aborts if that's the case.
 * Node or some other interpreter for JavaScript. Use `apt-get install nodejs`
   on Debian-based distributions and ensure that `/usr/bin/js` points to
   `/usr/bin/node`.
-* The standard unix tool `diff`.
+* The standard Unix tool `diff`.
+
+
+## Alternatives
+
+[Check exactly how similar using *It's All Text!* in combination with *emacsclient* is.]
 
 
 ## Shortcomings

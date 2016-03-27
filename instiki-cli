@@ -21,20 +21,21 @@ $ua->cookie_jar(HTTP::Cookies->new());
 # Return the URL for the appropriate kind of action ("show", "edit", ...)
 sub url {
     my ($base, $action) = @_;
-    $base =~ s#/show/#/$action/# or die;
+    $base =~ s#/show/#/$action/# or die "Not an URL referencing an Instiki \"show\" page: $base\n";
     return $base;
 }
 
-# Extract the entry contents and, if given an "edit" page, its name and
+# Extract the entry's contents and, if handed an "edit" page, its name and
 # the edit key
 sub extract {
     my $page = shift;
 
-    $page =~ /<textarea[^>]*>(.*)<\/textarea>/s or die $page;
+    $page =~ /<textarea[^>]*>(.*)<\/textarea>/s or
+        die "Couldn't find <textarea> in the fetched page.\n";
     my $contents = decode_entities($1);
     $contents .= "\015\012";
-    # We append a final EOL so editors are not confused. When pushing to the
-    # wiki, it will be removed again.
+    # We append a final EOL so editors are not confused. Before pushing to the
+    # wiki, we will remove it again.
 
     my $name;
     if($page =~ /<input id="new_name".*?value="([^"]*)"/) {
@@ -87,10 +88,10 @@ sub store {
     # Check for changes and fetch the edit key
     my $old = extract($ua->request(GET url($url, "edit"))->as_string());
     if($old->{contents} ne $old_contents) {
-        print "Contents have changed meanwhile. Aborting... ";
+        print "Contents have changed in the meantime. Aborting... ";
         my $b = $ua->request(GET url($url, "cancel_edit"))->as_string();
         print "done.\n";
-        exit 1;
+        return;
     }
 
     # Remove the final EOL (which we synthetically added in `extract`)
@@ -102,7 +103,10 @@ sub store {
         new_name  => $old->{name},
         author    => $AUTHOR,
     ];
-    $ua->request($req)->as_string() =~ /redirected/ or die;
+    $ua->request($req)->as_string() =~ /redirected/ or
+        die "Unexpected server response after saving.\n";
+
+    return 1;
 }
 
 # Watch a file for changes
@@ -136,7 +140,7 @@ my $file = (split /\//, $url)[-1];
 
 my $expected_contents;
 
-print "* Changes will be signed as \"$AUTHOR\".\n";
+print "* Changes will be signed as \"$AUTHOR\".\n\n";
 
 while(1) {
     print "* Fetching $url... ";
@@ -144,7 +148,7 @@ while(1) {
 
     if(defined $expected_contents) {
         if($old->{contents} ne $expected_contents) {
-            print "* There was some problem saving the changes.\n";
+            print "* There was some problem saving the changes. Aborting.\n";
             exit 1;
         }
         # No need to update the file in this branch
@@ -154,7 +158,7 @@ while(1) {
         close $fh or die $!;
     }
 
-    print "done.\n\n";
+    print "done.\n";
 
     while(1) {
         print "* Waiting for changes, go edit file \"$file\"...\n";
@@ -162,7 +166,10 @@ while(1) {
 
         open my $fh, "|-", "diff", "-u", "--", "/dev/stdin", "$file" or die $!;
         print $fh $old->{contents} or die $!;
-        close $fh;
+        close $fh or do { die $! if $! };
+        # The return value of close() equals the exit code of diff (if
+        # everything worked), which is nonzero if there are changes. Don't die
+        # in that case. (See perldoc -f close.)
 
         print "* Accept (y/n)? ";
         my $ok = <STDIN>;
@@ -172,6 +179,6 @@ while(1) {
 
     print "* Pushing changes... ";
     $expected_contents = read_file($file);
-    store($url, $old->{contents}, $expected_contents);
+    store($url, $old->{contents}, $expected_contents) or exit 1;
     print "done.\n\n";
 }
