@@ -153,9 +153,14 @@ while(1) {
         }
         # No need to update the file in this branch
     } else {
-        open my $fh, ">", $file or die $!;
+        # In case someone is watching $file to come into existence (for
+        # instance, to open an editor as soon as that's the case), we don't
+        # want them to have to deal with a partially-written file.
+        open my $fh, ">", "$file.partial" or die $!;
         print $fh $old->{contents} or die $!;
         close $fh or die $!;
+
+        rename "$file.partial" => $file or die $!;
     }
 
     print "done.\n";
