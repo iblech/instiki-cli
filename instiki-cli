@@ -26,6 +26,50 @@ sub url {
     return $base;
 }
 
+# Run JavaScript code (making a little effort to ensure that it can't do I/O
+# which however you should NOT rely on, see for instance
+# https://github.com/bcoe/sandcastle/issues/31) and return its output
+sub js {
+    my $code = shift;
+
+    my $mock = <<'EOF';
+        "use strict";
+        delete Error.prepareStackTrace;
+        delete Error.captureStackTrace;
+        Object.freeze(Error);
+        var __emulatedConsole = "";
+        var document = {
+            documentElement: {
+                lastChild: undefined,
+                parentNode: {
+                    appendChild: function (o) {}
+                }
+            },
+            createElement: function (tag) {
+                return {
+                    setAttribute: function (k,v) {
+                        if(k == "value") {
+                            __emulatedConsole = __emulatedConsole + v;
+                        }
+                    }
+                };
+            }
+        };
+EOF
+
+    $code = "$mock\n$code\n__emulatedConsole";
+    $code =~ s/(.)/sprintf '%%%02x', ord $1/egs;
+
+    my $js = qq/
+        console.log(require("vm").runInNewContext(unescape("$code"), {}));
+    /;
+
+    open my $fh, "-|", "js", "-e", "$js" or die $!;
+    local $/;
+
+    return scalar <$fh>;
+}
+
 # Extract the entry's contents and, if handed an "edit" page, its name and
 # the edit key
 sub extract {
@@ -49,31 +93,7 @@ sub extract {
     # http://hivelogic.com/enkoder/
     my $key;
     if($page =~ /(function hivelogic_enkoder.*?hivelogic_enkoder\(\);)/s) {
-        my $js = <<EOF;
-            document = {
-                documentElement: {
-                    lastChild: undefined,
-                    parentNode: {
-                        appendChild: function (o) {}
-                    }
-                },
-                createElement: function (tag) {
-                    return {
-                        setAttribute: function (k,v) {
-                            if(k == "value") {
-                                console.log(v);
-                            }
-                        },
-                    };
-                }
-            };
-
-            $1
-EOF
-
-        open my $fh, "-|", "js", "-e", "$js" or die $!;
-        local $/;
-        chomp($key = <$fh>);
+        chomp($key = js($1));
     }
 
     return { contents => $contents, name => $name, key => $key };

@@ -88,6 +88,20 @@ downloaded.
     instiki-cli "$1"
 
 
+## Security considerations
+
+* *instiki-cli* creates (or overwrites) a file in the current directory.
+  Therefore you shouldn't run *instiki-cli* on untrusted input.
+* Also you shouldn't run *instiki-cli* on untrunsted wikis, as it executes
+  arbitrary JavaScript code supplied by the wiki. A small effort to ensure that
+  it can't do uncontrolled input/output is made, but as there doesn't seem to
+  be a safe way of sandboxing JavaScript code from inside node (compare with
+  [these](https://github.com/bcoe/sandcastle/issues/31)
+  [discussions](https://github.com/nodejs/node-v0.x-archive/issues/1469) [on
+  GitHub](https://github.com/oftn/oftn-bot/commit/892a34dda5dfd77b499b2c913801c2b599b31342)),
+  you shouldn't rely on this. In any case, the JavaScript code can hog your CPU and memory.
+
+
 ## Shortcomings
 
 *instiki-cli* was written for my personal use. It is not polished in any way.
