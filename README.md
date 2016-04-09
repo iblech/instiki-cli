@@ -67,25 +67,27 @@ The following simple-minded script starts *instiki-cli* in the current screen
 window and opens the editor in a new window as soon as the entry has been
 downloaded.
 
-    #!/bin/bash
+```shell
+#!/bin/bash
 
-    wikidir=~/wiki  # change to your needs
+wikidir=~/wiki  # change to your needs
 
-    screen bash -c '
-        file="`basename "$1"`"
-        echo "* Waiting for \"$file\" to become available..."
+screen bash -c '
+    file="`basename "$1"`"
+    echo "* Waiting for \"$file\" to become available..."
 
-        cd "$0"
-        while :; do
-            sleep 0.1
-            [ -e "$file" ] && break
-        done
+    cd "$0"
+    while :; do
+        sleep 0.1
+        [ -e "$file" ] && break
+    done
 
-        vim -c "set tw=0" "$file"
-    ' "$wikidir" "$1"
+    vim -c "set tw=0" "$file"
+' "$wikidir" "$1"
 
-    cd "$wikidir"
-    instiki-cli "$1"
+cd "$wikidir"
+instiki-cli "$1"
+```
 
 
 ## Security considerations
