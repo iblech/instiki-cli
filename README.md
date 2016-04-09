@@ -61,6 +61,33 @@ synchronized).
 [Check exactly how similar using *It's All Text!* in combination with *emacsclient* is.]
 
 
+## Working with terminal multiplexers like screen
+
+The following simple-minded script starts *instiki-cli* in the current screen
+window and opens the editor in a new window as soon as the entry has been
+downloaded.
+
+    #!/bin/bash
+
+    wikidir=~/wiki  # change to your needs
+
+    screen bash -c '
+        file="`basename "$1"`"
+        echo "* Waiting for \"$file\" to become available..."
+
+        cd "$0"
+        while :; do
+            sleep 0.1
+            [ -e "$file" ] && break
+        done
+
+        vim -c "set tw=0" "$file"
+    ' "$wikidir" "$1"
+
+    cd "$wikidir"
+    instiki-cli "$1"
+
+
 ## Shortcomings
 
 *instiki-cli* was written for my personal use. It is not polished in any way.
