@@ -17,6 +17,7 @@ $|++;
 
 my $ua = LWP::UserAgent->new();
 $ua->cookie_jar(HTTP::Cookies->new());
+$ua->agent("instiki-cli, see https://github.com/iblech/instiki-cli");
 
 # Return the URL for the appropriate kind of action ("show", "edit", ...)
 sub url {
