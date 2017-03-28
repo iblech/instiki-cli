@@ -107,3 +107,10 @@ instiki-cli "$1"
 ## Shortcomings
 
 *instiki-cli* was written for my personal use. It is not polished in any way.
+
+
+## License
+
+You can (and are invited to) use, redistribute and modify *instiki-cli* under
+the terms of the GNU General Public License (GPL), version 3 or (at your
+option) any later version published by the Free Software Foundation.
