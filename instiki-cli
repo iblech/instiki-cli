@@ -75,6 +75,9 @@ EOF
 sub extract {
     my $page = shift;
 
+    $page =~ m#>Edit the page anyway</a># and
+        die "Page is locked, aborting.\n";
+
     $page =~ /<textarea[^>]*>(.*)<\/textarea>/s or
         die "Couldn't find <textarea> in the fetched page.\n";
     my $contents = decode_entities($1);
