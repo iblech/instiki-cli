@@ -197,10 +197,15 @@ while(1) {
 
         open my $fh, "|-", "diff", "-u", "--", "/dev/stdin", "$file" or die $!;
         print $fh $old->{contents} or die $!;
-        close $fh or do { die $! if $! };
-        # The return value of close() equals the exit code of diff (if
-        # everything worked), which is nonzero if there are changes. Don't die
-        # in that case. (See perldoc -f close.)
+        my $ret = close $fh or do { die $! if $! };
+        # If there were changes, diff returns with a non-zero exit code.
+        # In this case close() returns false; but we shouldn't die in that
+        # case. (See perldoc -f close.)
+
+        if($ret) {
+            print "* File was written to, but didn't change.\n";
+            redo;
+        }
 
         print "* Accept (y/n)? ";
         my $ok = <STDIN>;
