@@ -79,7 +79,7 @@ sub extract {
         die "Page is locked, aborting.\n";
 
     $page =~ /<textarea[^>]*>(.*)<\/textarea>/s or
-        die "Couldn't find <textarea> in the fetched page.\n";
+        die "Couldn't find <textarea> in the fetched page: $page\n";
     my $contents = decode_entities($1);
     $contents .= "\015\012";
     # We append a final EOL so editors are not confused. Before pushing to the
