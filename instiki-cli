@@ -28,7 +28,7 @@ sub url {
 
 # Run JavaScript code (making a little effort to ensure that it can't do I/O
 # which however you should NOT rely on, see for instance
-# https://github.com/bcoe/sandcastle/issues/31) and return its output
+# https://github.com/bcoe/sandcastle/issues/31) and return its (DOM) output
 sub js {
     my $code = shift;
 
@@ -158,6 +158,8 @@ sub watch {
 
 # Check for existence of a JavaScript interpreter
 system("js", "-e", "1") == 0 or die "Couldn't fork \"js\" to evaluate JavaScript.\n";
+js("document.createElement(3).setAttribute('value',2+2);") =~ /4/ or
+    die "Couldn't properly execute a dummy JavaScript program.\n";
 
 my $url  = $ARGV[0] or die "Usage: $0 http://wiki.example.org/instiki/show/Sandbox\n";
 my $file = (split /\//, $url)[-1];
