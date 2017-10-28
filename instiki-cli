@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 # Usage: instiki-cli https://wiki.example.org/instiki/show/Sandbox
 
 use warnings;
@@ -64,7 +64,7 @@ EOF
         console.log(require("vm").runInNewContext(unescape("$code"), {}));
     /;
 
-    open my $fh, "-|", "js", "-e", "$js" or die $!;
+    open my $fh, "-|", "node", "-e", "$js" or die $!;
     local $/;
 
     return scalar <$fh>;
@@ -157,7 +157,7 @@ sub watch {
 
 
 # Check for existence of a JavaScript interpreter
-system("js", "-e", "1") == 0 or die "Couldn't fork \"js\" to evaluate JavaScript.\n";
+system("node", "-e", "1") == 0 or die "Couldn't fork \"node\" to evaluate JavaScript.\n";
 js("document.createElement(3).setAttribute('value',2+2);") =~ /4/ or
     die "Couldn't properly execute a dummy JavaScript program.\n";
 
@@ -166,7 +166,8 @@ my $file = (split /\//, $url)[-1];
 
 my $expected_contents;
 
-print "* Changes will be signed as \"$AUTHOR\".\n\n";
+print "* Changes will be signed as \"$AUTHOR\".\n";
+print "  (Set the INSTIKI_AUTHOR environment variable to change this.)\n\n";
 
 while(1) {
     print "* Fetching $url... ";
