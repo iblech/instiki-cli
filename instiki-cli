@@ -161,7 +161,7 @@ system("node", "-e", "1") == 0 or die "Couldn't fork \"node\" to evaluate JavaSc
 js("document.createElement(3).setAttribute('value',2+2);") =~ /4/ or
     die "Couldn't properly execute a dummy JavaScript program.\n";
 
-my $url  = $ARGV[0] or die "Usage: $0 http://wiki.example.org/instiki/show/Sandbox\n";
+my $url  = $ARGV[0] or die "Usage: $0 https://wiki.example.org/instiki/show/Sandbox\n";
 my $file = (split /\//, $url)[-1];
 
 my $expected_contents;
