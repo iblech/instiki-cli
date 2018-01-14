@@ -145,7 +145,7 @@ sub watch {
         last if $ftime > $start;
     }
 
-    # Wait for the files to settle.
+    # Wait for the file to settle.
     while(1) {
         sleep FILE_WATCH_DELAY;
         my $ftime = (stat $file)[9];
@@ -176,6 +176,8 @@ while(1) {
     if(defined $expected_contents) {
         if($old->{contents} ne $expected_contents) {
             print "* There was some problem saving the changes. Aborting.\n";
+            print "[$old->{contents}]\n";
+            print "[$expected_contents]\n";
             exit 1;
         }
         # No need to update the file in this branch
