@@ -155,6 +155,13 @@ sub watch {
     }
 }
 
+# Strip all forms of trailing whitespace
+sub strip {
+    my $text = shift;
+    $text =~ s/[\015\012 ]*$//;
+    return $text;
+}
+
 
 # Check for existence of a JavaScript interpreter
 system("node", "-e", "1") == 0 or die "Couldn't fork \"node\" to evaluate JavaScript.\n";
@@ -174,10 +181,9 @@ while(1) {
     my $old = fetch($url);
 
     if(defined $expected_contents) {
-        if($old->{contents} ne $expected_contents) {
+        # Check that saving the changes worked, modulo trailing whitespace.
+        if(strip($old->{contents}) ne strip($expected_contents)) {
             print "* There was some problem saving the changes. Aborting.\n";
-            print "[$old->{contents}]\n";
-            print "[$expected_contents]\n";
             exit 1;
         }
         # No need to update the file in this branch
