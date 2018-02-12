@@ -29,7 +29,7 @@ local editor. Use it like this:
     * Waiting for changes, go edit file "Sandbox" or abort with ^C...
 
 I wrote the tool specifically to be able to edit the
-[nLab](https://golem.ph.utexas.edu/wiki/instiki/show/Sandbox) more comfortably,
+[nLab](https://ncatlab.org/nlab/show/HomePage) more comfortably,
 but *instiki-cli* should work with any Instiki installation. It's for editing
 single entries only and cannot be used to mirror a wiki (or even keep it
 synchronized).
