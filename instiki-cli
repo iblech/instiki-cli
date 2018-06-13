@@ -81,7 +81,9 @@ sub extract {
     $page =~ /<textarea[^>]*>(.*?)<\/textarea>/s or
         die "Couldn't find <textarea> in the fetched page: $page\n";
     my $contents = decode_entities($1);
-    $contents .= "\015\012";
+
+    $contents =~ s/\015//g;
+    $contents .= "\012";
     # We append a final EOL so editors are not confused. Before pushing to the
     # wiki, we will remove it again.
 
@@ -119,7 +121,7 @@ sub store {
     }
 
     # Remove the final EOL (which we synthetically added in `extract`)
-    $new_contents =~ s/\015\012$//;
+    $new_contents =~ s/\012$//;
 
     my $req = POST url($url, "save"), [
         _form_key => $old->{key},
@@ -156,10 +158,11 @@ sub watch {
     }
 }
 
-# Strip all forms of trailing whitespace
+# Strip all forms of trailing whitespace and all CR's
 sub strip {
     my $text = shift;
-    $text =~ s/[\015\012 ]*$//;
+    $text =~ s/\015//g;
+    $text =~ s/[\012 ]*$//;
     return $text;
 }
 
