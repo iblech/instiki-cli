@@ -115,7 +115,7 @@ sub store {
     my $old = extract($ua->request(GET url($url, "edit"))->as_string());
     if($old->{contents} ne $old_contents) {
         print "Contents have changed in the meantime. Aborting... ";
-        my $b = $ua->request(GET url($url, "cancel_edit"))->as_string();
+        $ua->request(GET url($url, "cancel_edit"));
         print "done.\n";
         return;
     }
@@ -130,8 +130,10 @@ sub store {
         author    => $AUTHOR,
         announcement => "",  # avoid 501 on the nLab
     ];
-    $ua->request($req)->as_string() =~ /redirected/ or
+    my $resp = $ua->request($req)->as_string();
+    $resp =~ /redirected/ or do {
         die "Unexpected server response after saving.\n";
+    };
 
     return 1;
 }
