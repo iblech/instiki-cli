@@ -126,6 +126,7 @@ sub store {
         content   => $new_contents,
         new_name  => $old->{name},
         author    => $AUTHOR,
+        announcement => "",  # avoid 501 on the nLab
     ];
     $ua->request($req)->as_string() =~ /redirected/ or
         die "Unexpected server response after saving.\n";
